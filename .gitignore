@@ -1,0 +1,13 @@
+.pio
+.vscode
+*.txt
+*.bin
+*.elf
+*.hex
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+.native_stubs
+*.md
+*.ps1

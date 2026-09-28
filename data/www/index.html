@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yougille Config</title>
+<style>
+  * { box-sizing: border-box; }
+  html { background: #008080; }
+  body { font-family: Tahoma, "MS Sans Serif", "Segoe UI", sans-serif; font-size: 12px; color: #000;
+         max-width: 780px; margin: 20px auto; padding: 10px; background: #c0c0c0;
+         box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff; }
+  h2 { margin: -10px -10px 12px -10px; padding: 4px 8px; background: #000080; color: #fff;
+       font-size: 13px; font-weight: bold; letter-spacing: 1px; }
+  #previewBadge { background: #ffff80; color: #000; padding: 1px 6px; margin-left: 8px; font-weight: normal; border: 1px solid #000; }
+  #status { padding: 5px 8px; margin-bottom: 12px; background: #fff;
+            box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  fieldset { border: none; padding: 10px; margin: 0 0 12px 0; background: #c0c0c0;
+             box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff; }
+  legend { padding: 2px 6px; font-weight: bold; background: #000080; color: #fff; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+  input, textarea, select { background: #fff; color: #000; border: none; padding: 3px 4px; font-size: 12px;
+            font-family: Tahoma, "MS Sans Serif", sans-serif;
+            box-shadow: inset -1px -1px #fff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a; }
+  input { width: 70px; }
+  input.wide { width: 170px; }
+  input[type="checkbox"] { width: auto; box-shadow: none; }
+  textarea { width: 100%; font-family: "Courier New", monospace; }
+  button { background: #c0c0c0; color: #000; border: none; padding: 4px 12px; font-size: 12px;
+           font-family: Tahoma, "MS Sans Serif", sans-serif; cursor: pointer;
+           box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #fff; }
+  button:active { box-shadow: inset -1px -1px #fff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080; }
+  #netlist button { margin: 2px 4px 2px 0; padding: 2px 8px; }
+  ::selection { background: #000080; color: #fff; }
+</style>
+</head>
+<body>
+<h2>Yougille Config <span id="previewBadge" hidden>[PREVIEW]</span></h2>
+<div id="status">...</div>
+
+<fieldset><legend>Wi-Fi</legend>
+  <div class="row">SSID <input id="ssid" class="wide"> Pass <input id="wpass" class="wide" type="password"></div>
+  <div class="row"><button onclick="scan()">Scan networks</button> <span id="netlist"></span></div>
+</fieldset>
+
+<fieldset><legend>Access point</legend>
+  <div class="row">Name <input id="apname" class="wide"> Pass <input id="appass" class="wide"></div>
+</fieldset>
+
+<fieldset><legend>Weather</legend>
+  <div class="row">City <input id="wcity" class="wide">
+       <button onclick="geocode()">Find coords</button> <span id="geostatus"></span></div>
+  <div class="row">Lat <input id="lat" type="number" step="any"> Lon <input id="lon" type="number" step="any"></div>
+  <div class="row">Quiet: from <span id="qfromBox"></span> to <span id="qtoBox"></span>
+       <label><input type="checkbox" id="use12h" onchange="toggle12h(this.checked)"> 12h</label>
+       Period (min) <input id="period" type="number"></div>
+</fieldset>
+
+<fieldset><legend>Displays <button onclick="addDisplay()">+</button></legend>
+  <div id="displays"></div>
+</fieldset>
+
+<fieldset><legend>Cities <button onclick="addCity()">+</button></legend>
+  <div id="cities"></div>
+</fieldset>
+
+<fieldset><legend>Raw JSON</legend>
+  <textarea id="raw" rows="10"></textarea>
+  <div class="row"><button onclick="applyRaw()">Apply from Raw</button></div>
+</fieldset>
+
+<div class="row">
+  <button onclick="save()">Save</button>
+  <button onclick="restart()">Restart</button>
+</div>
+
+<script>
+window.onerror = function (msg, src, line) {
+  var s = document.getElementById("status");
+  if (s) { s.textContent = "JS ERROR: " + msg + " (line " + line + ")"; s.style.background = "#ff8080"; }
+};
+
+let SUPPORTED_DISPLAYS = ["ST7735", "SSD1306"];
+
+const OFFSETS = [];
+for (let o = -12; o <= 14; o++) OFFSETS.push(o * 60);
+[-210, 195, 330, 345, 390, 525, 570, 630].forEach(m => OFFSETS.push(m));
+OFFSETS.sort((a, b) => a - b);
+
+function offLabel(m) {
+  const a = Math.abs(m);
+  return "UTC" + (m < 0 ? "-" : "+") + Math.floor(a / 60) +
+         (a % 60 ? ":" + String(a % 60).padStart(2, "0") : "");
+}
+
+const DEFAULT_CONFIG = {
+  wifi: { ssid: "MyHome", pass: "secret" },
+  ap:   { name: "Yougille-Config", pass: "12345678" },
+  displays: [
+    { name:"main", type:"ST7735", width:160, height:128, rotation:1, cs:5, dc:16, rst:17, bl:32, addr:0, sda:-1, scl:-1 },
+    { name:"oled", type:"SSD1306", width:128, height:64, rotation:0, cs:-1, dc:-1, rst:-1, bl:-1, addr:60, sda:21, scl:22 }
+  ],
+  cities: [
+    { name:"Kaliningrad", offMin:120 }, { name:"Moscow", offMin:180 },
+    { name:"Samara", offMin:240 },      { name:"Yekaterinburg", offMin:300 },
+    { name:"Omsk", offMin:360 },        { name:"Krasnoyarsk", offMin:420 },
+    { name:"Irkutsk", offMin:480 },     { name:"Yakutsk", offMin:540 },
+    { name:"Vladivostok", offMin:600 }, { name:"UTC", offMin:0 },
+    { name:"New York", offMin:-300 },   { name:"Tokyo", offMin:540 }
+  ],
+  weatherCity: "Moscow",
+  loc: { lat: 55.75, lon: 37.62 },
+  quiet: { from: 23, to: 7 },
+  weatherPeriodMin: 30
+};
+
+let cfg = null;
+let PREVIEW = false;
+let USE12H = false;
+try { USE12H = localStorage.getItem("cfg12h") === "1"; } catch (e) {}
+
+const el = id => document.getElementById(id);
+const num = v => { const n = parseInt(v, 10); return isNaN(n) ? -1 : n; };
+
+async function getJson(path) {
+  try { const r = await fetch(path); if (r.ok) return await r.json(); } catch (e) {}
+  return null;
+}
+
+async function load() {
+  const caps = await getJson("/api/capabilities");
+  if (caps && caps.displays) SUPPORTED_DISPLAYS = caps.displays;
+  const c = await getJson("/api/config");
+  if (c) { cfg = c; }
+  else { cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); PREVIEW = true; el("previewBadge").hidden = false; }
+  render();
+}
+
+function render() {
+  el("ssid").value = cfg.wifi.ssid || "";
+  el("wpass").value = cfg.wifi.pass || "";
+  el("apname").value = cfg.ap.name || "";
+  el("appass").value = cfg.ap.pass || "";
+  el("wcity").value = cfg.weatherCity || "";
+  el("lat").value = cfg.loc.lat;
+  el("lon").value = cfg.loc.lon;
+  el("use12h").checked = USE12H;
+  renderQuiet();
+  el("period").value = cfg.weatherPeriodMin;
+  renderDisplays();
+  renderCities();
+  el("raw").value = JSON.stringify(cfg, null, 2);
+  status();
+}
+
+function toggle12h(v) {
+  USE12H = !!v;
+  try { localStorage.setItem("cfg12h", USE12H ? "1" : "0"); } catch (e) {}
+  renderQuiet();
+}
+
+function hourSelect(id, val24) {
+  let opts = "";
+  if (USE12H) {
+    let h12 = val24 % 12; if (h12 === 0) h12 = 12;
+    for (let h = 1; h <= 12; h++)
+      opts += '<option value="' + h + '"' + (h === h12 ? " selected" : "") + '>' + h + '</option>';
+  } else {
+    for (let h = 0; h <= 23; h++)
+      opts += '<option value="' + h + '"' + (h === val24 ? " selected" : "") + '>' + String(h).padStart(2, "0") + '</option>';
+  }
+  return '<select id="' + id + '" onchange="quietChanged()">' + opts + '</select>';
+}
+
+function ampmSelect(id, val24) {
+  if (!USE12H) return "";
+  const pm = val24 >= 12;
+  return '<select id="' + id + '" onchange="quietChanged()">' +
+         '<option' + (!pm ? " selected" : "") + '>AM</option>' +
+         '<option' + (pm ? " selected" : "") + '>PM</option></select>';
+}
+
+function renderQuiet() {
+  el("qfromBox").innerHTML = hourSelect("qfromH", cfg.quiet.from) + ampmSelect("qfromP", cfg.quiet.from);
+  el("qtoBox").innerHTML   = hourSelect("qtoH",   cfg.quiet.to)   + ampmSelect("qtoP",   cfg.quiet.to);
+}
+
+function readHour(hId, pId) {
+  let h = num(el(hId).value);
+  if (USE12H) { h = h % 12; if (el(pId) && el(pId).value === "PM") h += 12; }
+  return h;
+}
+
+function quietChanged() {
+  cfg.quiet.from = readHour("qfromH", "qfromP");
+  cfg.quiet.to   = readHour("qtoH", "qtoP");
+}
+
+function typeSelect(i, cur) {
+  let opts = SUPPORTED_DISPLAYS.slice();
+  if (opts.indexOf(cur) < 0) opts.push(cur);
+  return '<select onchange="cfg.displays[' + i + '].type=this.value">' +
+    opts.map(t => '<option' + (t === cur ? ' selected' : '') + '>' + t + '</option>').join('') +
+    '</select>';
+}
+
+function renderDisplays() {
+  const box = el("displays"); box.innerHTML = "";
+  (cfg.displays || []).forEach((d, i) => {
+    const div = document.createElement("div");
+    div.className = "row";
+    div.innerHTML =
+      '<input value="' + d.name + '" onchange="cfg.displays[' + i + '].name=this.value">' +
+      typeSelect(i, d.type) +
+      'W<input type="number" value="' + d.width + '" onchange="cfg.displays[' + i + '].width=num(this.value)">' +
+      'H<input type="number" value="' + d.height + '" onchange="cfg.displays[' + i + '].height=num(this.value)">' +
+      'Rot<input type="number" value="' + d.rotation + '" onchange="cfg.displays[' + i + '].rotation=num(this.value)">' +
+      'CS<input type="number" value="' + (d.cs ?? -1) + '" onchange="cfg.displays[' + i + '].cs=num(this.value)">' +
+      'DC<input type="number" value="' + (d.dc ?? -1) + '" onchange="cfg.displays[' + i + '].dc=num(this.value)">' +
+      'RST<input type="number" value="' + (d.rst ?? -1) + '" onchange="cfg.displays[' + i + '].rst=num(this.value)">' +
+      'BL<input type="number" value="' + (d.bl ?? -1) + '" onchange="cfg.displays[' + i + '].bl=num(this.value)">' +
+      'ADDR<input type="number" value="' + (d.addr ?? 0) + '" onchange="cfg.displays[' + i + '].addr=num(this.value)">' +
+      'SDA<input type="number" value="' + (d.sda ?? -1) + '" onchange="cfg.displays[' + i + '].sda=num(this.value)">' +
+      'SCL<input type="number" value="' + (d.scl ?? -1) + '" onchange="cfg.displays[' + i + '].scl=num(this.value)">' +
+      '<button onclick="cfg.displays.splice(' + i + ',1);renderDisplays()">x</button>';
+    box.appendChild(div);
+  });
+}
+
+function offSelect(i, cur) {
+  let opts = OFFSETS.slice();
+  if (opts.indexOf(cur) < 0) { opts.push(cur); opts.sort((a, b) => a - b); }
+  return '<select onchange="cfg.cities[' + i + '].offMin=num(this.value)">' +
+    opts.map(m => '<option value="' + m + '"' + (m === cur ? ' selected' : '') + '>' + offLabel(m) + '</option>').join('') +
+    '</select>';
+}
+
+function renderCities() {
+  const box = el("cities"); box.innerHTML = "";
+  (cfg.cities || []).forEach((c, i) => {
+    const div = document.createElement("div");
+    div.className = "row";
+    div.innerHTML =
+      'Name <input class="wide" value="' + c.name + '" onchange="cfg.cities[' + i + '].name=this.value">' +
+      offSelect(i, c.offMin ?? 0) +
+      '<button onclick="cfg.cities.splice(' + i + ',1);renderCities()">x</button>';
+    box.appendChild(div);
+  });
+}
+
+function addDisplay() {
+  cfg.displays.push({ name:"new", type: SUPPORTED_DISPLAYS[0], width:160, height:128, rotation:1,
+                      cs:-1, dc:-1, rst:-1, bl:-1, addr:0, sda:-1, scl:-1 });
+  renderDisplays();
+}
+function addCity() { cfg.cities.push({ name:"", offMin:0 }); renderCities(); }
+
+function collect() {
+  cfg.wifi.ssid = el("ssid").value;
+  cfg.wifi.pass = el("wpass").value;
+  cfg.ap.name = el("apname").value;
+  cfg.ap.pass = el("appass").value;
+  cfg.weatherCity = el("wcity").value;
+  cfg.loc.lat = parseFloat(el("lat").value) || 0;
+  cfg.loc.lon = parseFloat(el("lon").value) || 0;
+  cfg.weatherPeriodMin = num(el("period").value);
+  quietChanged();
+}
+
+async function geocode() {
+  const name = el("wcity").value.trim();
+  if (!name) { el("geostatus").textContent = "Enter city first"; return; }
+  try {
+    const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?name=" +
+                          encodeURIComponent(name) + "&count=1&format=json");
+    const j = await r.json();
+    if (j.results && j.results.length) {
+      cfg.loc.lat = j.results[0].latitude;
+      cfg.loc.lon = j.results[0].longitude;
+      el("lat").value = cfg.loc.lat;
+      el("lon").value = cfg.loc.lon;
+      el("geostatus").textContent = "Found: " + j.results[0].name;
+    } else el("geostatus").textContent = "Not found - enter coords manually";
+  } catch (e) { el("geostatus").textContent = "Network error"; }
+}
+
+function applyRaw() {
+  try { cfg = JSON.parse(el("raw").value); render(); }
+  catch (e) { alert("JSON error: " + e.message); }
+}
+
+async function save() {
+  collect();
+  el("raw").value = JSON.stringify(cfg, null, 2);
+  if (PREVIEW) { alert("PREVIEW: not sent anywhere"); return; }
+  const r = await fetch("/api/config", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(cfg) });
+  alert(r.ok ? "Saved" : "Error: " + await r.text());
+}
+
+async function restart() {
+  if (PREVIEW) { alert("PREVIEW"); return; }
+  await fetch("/api/restart", { method: "POST" });
+}
+
+async function scan() {
+  let list = null;
+  if (!PREVIEW) list = await getJson("/api/wifi/scan");
+  if (!list) list = [{ ssid: "MockHome", rssi: -42 }, { ssid: "MockNeighbour", rssi: -78 }];
+  const box = el("netlist"); box.innerHTML = "";
+  list.forEach(n => {
+    const b = document.createElement("button");
+    b.textContent = n.ssid + " (" + n.rssi + ")";
+    b.onclick = () => { el("ssid").value = n.ssid; };
+    box.appendChild(b);
+  });
+}
+
+async function status() {
+  if (PREVIEW) { el("status").textContent = "PREVIEW MODE: mock data, server untouched"; return; }
+  const s = await getJson("/api/net");
+  if (s) el("status").textContent =
+    "Net: " + s.state + " | IP: " + s.ip + " | weather: " +
+    (s.weatherAgeSec >= 0 ? Math.round(s.weatherAgeSec / 60) + " min ago" : "no data");
+}
+
+setInterval(status, 5000);
+load();
+</script>
+</body>
+</html>
