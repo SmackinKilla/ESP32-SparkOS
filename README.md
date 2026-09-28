@@ -1,5 +1,5 @@
 # ESP32-TesseraOS
-
+![TesseraOS logo](Logo.png)
 ### **[ENG ver.]**
 ## What is this?
 Firmware for ESP32 paired with a couple of displays. In my implementation, this will be a small 3D-printed monitor case. It includes weather functionality (from both an onboard sensor and API), a task manager (in my case, from the YouGille CRM), time zones for different regions, a mini-game, and settings. The project features a fairly simple system for adding new pages. All you need to do is create two files inherited from Page.h and write your logic. All of this will be described in more detail later, once the code actually starts looking like something functional.
