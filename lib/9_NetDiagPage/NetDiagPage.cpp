@@ -15,7 +15,7 @@ void NetDiagPage::onShortClick() {
 
 void NetDiagPage::onLongClick() {
     if (_idx == 0) {
-        DrawFrame("NETWORK");
+        DrawFrame("NETWORK", "Next: x1", "Select: Hold");
         screen(0)->setCursor(2, 20);
         screen(0)->setTextColor(COLOR_TEXT);
         screen(0)->print("Connecting...");
@@ -31,7 +31,7 @@ void NetDiagPage::onLongClick() {
 }
 
 void NetDiagPage::Draw() {
-    DrawFrame("NETWORK");
+    DrawFrame("NETWORK", "Next: x1", "Select: Hold");
     static const char* items[3] = {"1. Retry", "2. AP mode", "3. Offline"};
     Page::DrawMenu(items, 3, _idx);
 }

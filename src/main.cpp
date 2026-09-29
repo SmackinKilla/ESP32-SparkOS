@@ -91,7 +91,7 @@ void setup() {
     pm.registerPage(PageIndex::HOME, &homePage, TitleInfo("Home", false, false));
     pm.registerPage(PageIndex::SCREENSAVER, &screenSaver, TitleInfo("ScreenSaver", false, false));
     pm.registerPage(PageIndex::NETDIAG, &netDiag, TitleInfo("Network", false, false));
-    pm.registerPage(PageIndex::SYSINFO, &sysInfo, TitleInfo("Network", false, false));
+    pm.registerPage(PageIndex::SYSINFO, &sysInfo, TitleInfo("SysInfo", false, false));
     
     if (NetService::state() == NetState::OFF) {
     pm.SwitchToIndex(PageIndex::NETDIAG);
@@ -116,6 +116,7 @@ void loop() {
 
     if (current) {
         current->Update(dt);
+        current->TickClock();
     }
 
     displays.flushAll();

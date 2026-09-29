@@ -17,9 +17,7 @@ public:
 
 private:
     void DrawMenu();
-    
     static constexpr int MAX_MENU_ITEMS = 10;  
-    
     int _currentIndex;      
     int _previousIndex; 
 };

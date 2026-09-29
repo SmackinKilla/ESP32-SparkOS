@@ -26,15 +26,15 @@ void WeatherPage::OnEnter() {
     float temp = wx.valid ? wx.temp : 0.0f;
     int humidity = wx.valid ? wx.humidity : 0;
 
-    DrawFrame("WEATHER");
-    screen(0)->fillRect(1, SCREEN_HEIGHT - 15, SCREEN_WIDTH - 2, 14, COLOR_BG);
+    DrawFrame("WEATHER", "Hold: Info", "Back: x2");
+    //screen(0)->fillRect(1, SCREEN_HEIGHT - 15, SCREEN_WIDTH - 2, 14, COLOR_BG);
     drawBevel(screen(0), 1, SCREEN_HEIGHT - 15, SCREEN_WIDTH - 2, 14, true, false);
-    screen(0)->setCursor(3, SCREEN_HEIGHT - 12);
+/*     screen(0)->setCursor(3, SCREEN_HEIGHT - 12);
     screen(0)->setTextColor(COLOR_TEXT);
     screen(0)->setTextSize(1);
     screen(0)->print("Hold: Info");
     screen(0)->setCursor(SCREEN_WIDTH - 51, SCREEN_HEIGHT - 12);
-    screen(0)->print("Back: x2");
+    screen(0)->print("Back: x2"); */
 
     drawBevel(screen(0), SCREEN_WIDTH - 44, 17, 43, 12, true, false); 
     screen(0)->setCursor(SCREEN_WIDTH - 33, 19);
@@ -43,17 +43,17 @@ void WeatherPage::OnEnter() {
     screen(0)->print("ICON");
     DrawWeatherIcons(SCREEN_WIDTH - 44, 29, 43, 39, code);
 
-    drawBevel(screen(0), SCREEN_WIDTH - 114, 17, 70, 12, true, false); 
-    screen(0)->setCursor(SCREEN_WIDTH - 100, 19);
+    drawBevel(screen(0), SCREEN_WIDTH - 109, 17, 65, 12, true, false); 
+    screen(0)->setCursor(SCREEN_WIDTH - 95, 19);
     screen(0)->print("OUTSIDE");
-    screen(0)->setCursor(SCREEN_WIDTH - 112, 30);
+    screen(0)->setCursor(SCREEN_WIDTH - 107, 30);
     screen(0)->printf("T:%.1fC", temp);
-    screen(0)->setCursor(SCREEN_WIDTH - 112, 40);
+    screen(0)->setCursor(SCREEN_WIDTH - 107, 40);
     screen(0)->printf("H:%d%%", humidity);
-    screen(0)->setCursor(SCREEN_WIDTH - 112, 50);
+    screen(0)->setCursor(SCREEN_WIDTH - 107, 50);
     screen(0)->print(getDescriptionFromCode(code));    
 
-    drawBevel(screen(0), 1, 17, 45, 12, true, false);
+    drawBevel(screen(0), 1, 17, 50, 12, true, false);
     screen(0)->setCursor(7, 19);
     screen(0)->print("LOCAL");
     screen(0)->setCursor(2, 30);
@@ -61,7 +61,7 @@ void WeatherPage::OnEnter() {
     screen(0)->setCursor(2, 40);
     screen(0)->printf("H:%d%%", _h);
 
-    screen(0)->drawFastVLine(SCREEN_WIDTH - 115, 29, 40, COLOR_WHITE);
+    screen(0)->drawFastVLine(SCREEN_WIDTH - 110, 29, 40, COLOR_WHITE);
     screen(0)->drawFastVLine(SCREEN_WIDTH - 45, 29, 40, COLOR_WHITE);
 
     drawBevel(screen(0), 1, 69, 40, 12, true, false); // bevel left far column

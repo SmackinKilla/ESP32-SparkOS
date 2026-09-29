@@ -18,12 +18,12 @@ private:
     void drawWindow();
     static constexpr int SETTINGS_COUNT = 6;
     const char* _settingsItems[6] = {
-        "1. Theme",
-        "2. Click Speed",
-        "3. Brightness",
-        "4. Network",
-        "5. Info",
-        "6. Reset Settings"
+        "Theme",
+        "Click Speed",
+        "Brightness",
+        "Network",
+        "Info",
+        "Reset Settings"
     };
     const char* _themeOptions[6] = {"Blue", "Red", "Purple", "Green", "Dark", "Win95"};
     const char* _speedOptions[3] = {"Fast", "Normal", "Slow"};

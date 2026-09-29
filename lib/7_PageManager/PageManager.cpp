@@ -65,7 +65,7 @@ bool PageManager::SwitchToIndex(PageIndex index) {
     if (currIdx < _pages.size() && _pages[currIdx]) {
         _pages[currIdx]->OnExit();
     }
-    LOGI(LT_UI, "[PageManager] Swith to: %s", _titles[nextIdx].title);
+    LOGI(LT_UI, "[PageManager] Switch to: %s", _titles[nextIdx].title);
     _currentIndex = index;
     _pages[nextIdx]->OnEnter();
     return true;

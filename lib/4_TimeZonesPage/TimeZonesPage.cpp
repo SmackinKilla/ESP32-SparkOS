@@ -20,7 +20,7 @@ void TimeZonesPage::onDoubleClick() {
 }
 
 void TimeZonesPage::OnEnter() {
-    DrawFrame("TIME ZONES");
+    DrawFrame("TIME ZONES", "Next: x1", " ");
     Page::DrawMenu(_timeZonesItems, TimeZonesCount, _currentIndex);
 }
 

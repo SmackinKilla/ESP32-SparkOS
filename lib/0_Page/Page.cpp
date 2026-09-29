@@ -1,6 +1,7 @@
 #include "Page.h"
 #include <Adafruit_GFX.h>
 #include <ColorPalette.h>
+#include <string.h>
 #include "DisplayManager.h"
 #include "Icons.h"
 #include "NetService.h"
@@ -8,6 +9,27 @@
 
 void Page::DrawWeatherIcons(int x, int y, int w, int h, int weatherCode) {
     Img::draw(screen(0), iconPath(getIconFromCode(weatherCode)), x, y, w, h);
+}
+
+void Page::DrawClock() {
+    char buf[8];
+    NetService::formatClock(buf, sizeof(buf));
+    strncpy(_clockText, buf, sizeof(_clockText));
+    _clockText[sizeof(_clockText) - 1] = '\0';
+    screen(0)->fillRect(SCREEN_WIDTH - 39, 3, 31, 12, COLOR_ACCENT);
+    drawBevel(screen(0),SCREEN_WIDTH - 58, 3, 55, 13, false, false);
+    screen(0)->setCursor(SCREEN_WIDTH - 38, 6);
+    screen(0)->setTextSize(1);
+    screen(0)->setTextColor(COLOR_WHITE);
+    screen(0)->print(_clockText);
+}
+
+void Page::TickClock() {
+    char buf[8];
+    NetService::formatClock(buf, sizeof(buf));
+    if (strcmp(buf, _clockText) != 0) {
+        DrawClock();
+    }
 }
 
 static uint16_t mix565(uint16_t a, uint16_t b, uint8_t t) {
@@ -54,21 +76,24 @@ static int calcScrollOffset(int selectedIdx, int itemCount, int maxVisible) {
     return scrollOffset;
 }
 
-void Page::DrawFrame(const char* title) {
+void Page::DrawFrame(const char* title, const char* LHint, const char* RHint) {
     screen(0)->fillScreen(COLOR_BG);
     screen(0)->fillRect(1, 2, SCREEN_WIDTH - 2, 14, COLOR_ACCENT);
     screen(0)->setCursor(5, 6);    
     screen(0)->setTextSize(1);
     screen(0)->setTextColor(COLOR_WHITE);
     screen(0)->print(title);
-    drawNetIcon(SCREEN_WIDTH - 47, 4);
+    drawNetIcon(SCREEN_WIDTH - 57, 4);
+    DrawClock();
     drawBevel(screen(0), 1, 2, SCREEN_WIDTH - 2, 15, true, false); // bevel topbar
     drawBevel(screen(0), 1, SCREEN_HEIGHT - 15, SCREEN_WIDTH - 1, 14, true, false); // bevel bottombar
-    screen(0)->setCursor(3, SCREEN_HEIGHT - 12);
     screen(0)->setTextColor(COLOR_TEXT);
-    screen(0)->print("Next: x1");
-    screen(0)->setCursor(SCREEN_WIDTH - 77, SCREEN_HEIGHT - 12);
-    screen(0)->print("Select: Hold");
+    int LHintLeght = strlen(LHint) * 6;
+    int RHintLeght = strlen(RHint) * 6;
+    screen(0)->setCursor(3, SCREEN_HEIGHT - 12);
+    screen(0)->print(LHint);
+    screen(0)->setCursor(SCREEN_WIDTH - RHintLeght - 2, SCREEN_HEIGHT - 12);
+    screen(0)->print(RHint);
 }
 
 void Page::DrawMenu(const char* items[], int count, int currentIndex) {

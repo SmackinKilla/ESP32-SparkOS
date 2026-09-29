@@ -15,7 +15,7 @@ void MiniGames::onDoubleClick() {
 }
 
 void MiniGames::OnEnter() {
-    DrawFrame("GAMES");
+    DrawFrame("GAMES", "Next: x1", "Select: Hold");
 }
 
 void MiniGames::Update(uint32_t deltaTimeMs) {

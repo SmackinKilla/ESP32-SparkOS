@@ -11,7 +11,7 @@ static uint8_t s_level[LT_COUNT];
 
 void Log::init() {
     for (uint8_t i = 0; i < LT_COUNT; i++) s_level[i] = LV_INFO;
-    LOGI(LT_BOOT, "=== StudyOS ===");
+    LOGI(LT_BOOT, "=== TesseraOS ===");
 }
 
 void Log::setLevel(uint8_t tag, uint8_t level) {

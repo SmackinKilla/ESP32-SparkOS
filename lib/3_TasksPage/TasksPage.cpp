@@ -15,7 +15,7 @@ void TasksPage::onDoubleClick() {
 }
 
 void TasksPage::OnEnter() {
-    DrawFrame("TASKS");
+    DrawFrame("TASKS", "Next: x1", "Select: Hold");
 }
 
 void TasksPage::Update(uint32_t deltaTimeMs) {

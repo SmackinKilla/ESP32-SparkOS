@@ -11,8 +11,6 @@ void HomePage::DrawMenu() {
 
     const auto& menuPages = _pm->getMenuPages();
     int menuCount = menuPages.size();
-    
-
     if (menuCount <= 0 || menuCount > MAX_MENU_ITEMS) return;
     
 
@@ -33,22 +31,19 @@ void HomePage::DrawMenu() {
         }
         items[i] = buffers[i];
     }
-    
+
     Page::DrawMenu(items, menuCount, _currentIndex);
 }
 
 void HomePage::onShortClick() {
     int menuCount = _pm->getMenuPages().size();
-    LOGI(LT_HW, "Short Click Detected");
     if (menuCount <= 0) return;
-    
     _currentIndex++;
     if (_currentIndex >= menuCount) _currentIndex = 0;
     _previousIndex = -1;
 }
 
 void HomePage::onLongClick() {
-    LOGI(LT_HW, "Long Click Detected");
     if (!_pm) return;
     
     const auto& menuPages = _pm->getMenuPages();
@@ -62,7 +57,7 @@ void HomePage::onDoubleClick() {
 }
 
 void HomePage::OnEnter() {
-    DrawFrame("HOME");
+    DrawFrame("HOME", "Next: x1", "Select: Hold");
     DrawMenu();
     screen(1)->setCursor(3, 10);
     screen(1)->setTextColor(1);
@@ -72,6 +67,10 @@ void HomePage::OnEnter() {
 
 void HomePage::Update(uint32_t deltaTimeMs) {
     if (_currentIndex != _previousIndex) {
+        const auto& menuPages = _pm->getMenuPages();
+        PageIndex idx = menuPages[_currentIndex];
+        const char* selected = _pm->getTitleByIndex(idx).title;
+        LOGI(LT_UI, "Selected: %s, ID: %i", selected, _currentIndex);
         DrawMenu();
         _previousIndex = _currentIndex;
     }

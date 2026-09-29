@@ -15,14 +15,16 @@ public:
     virtual void Update(uint32_t deltaTimeMs) {}
     virtual void OnExit() {}
     virtual void onDoubleClick() {}
-
+    virtual void TickClock(); 
 protected:
     void DrawWeatherIcons(int x, int y, int w, int h, int weatherCode);
-    void DrawFrame(const char* title);
+    void DrawFrame(const char* title, const char* LHint, const char* RHint);
     void DrawMenu(const char* items[], int count, int currentIndex);
     void drawModalWindow( const char* title, const char* items[], int itemCount, int selectedIdx, int x, int y, int w, int h, int maxVisibleItems = 4);
     void drawBevel(Adafruit_GFX* d, int x, int y, int w, int h, bool raised, bool thick);
     void drawNetIcon(int x, int base);
+    void DrawClock(); 
+    char _clockText[8] = "--:--";
     Adafruit_GFX* screen(int index) {
     return _displays ? _displays->gfx((int)index) : nullptr;
     }

@@ -1,8 +1,10 @@
-#include "SettingsPage.h"
+#include <OneButton.h>
 #include <ColorPalette.h>
 #include <Adafruit_GFX.h>
+#include "SettingsPage.h"
 #include "PageManager.h"
-#include <OneButton.h>
+#include "log.h"
+
 extern OneButton button;  
 void SettingsPage::drawWindow() {
     const char** items = _subMenus[_currentIndex];
@@ -62,12 +64,14 @@ void SettingsPage::onDoubleClick() {
 }
 
 void SettingsPage::OnEnter() {
-    DrawFrame("SETTINGS");
+    DrawFrame("SETTINGS", "Next: x1", "Select: Hold");
     Page::DrawMenu(_settingsItems, SETTINGS_COUNT, _currentIndex);
 }
 
 void SettingsPage::Update(uint32_t deltaTimeMs) {
     if (_currentIndex != _previousIndex) {
+        const char* selected = _settingsItems[_currentIndex];
+        LOGI(LT_UI, "Selected: %s, ID: %i", selected, _currentIndex);
         Page::DrawMenu(_settingsItems, SETTINGS_COUNT, _currentIndex);
         _previousIndex = _currentIndex;
     }
